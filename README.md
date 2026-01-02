@@ -1,127 +1,169 @@
-# claude-plugin-template
+# python-lsp
 
-A ready-to-fork template for building a **Claude Code “plugin”** using:
+A Claude Code plugin providing comprehensive Python development support through:
 
-- **Claude Code project assets**: `.claude/commands`, `.claude/hooks`, `.claude/settings.json`
-- **MCP server** (Model Context Protocol) in **TypeScript** using stdio transport
-- **Team automation** in `.github/` (CI, templates, Copilot prompts/instructions)
+- **Pyright LSP** integration for IDE-like features
+- **15 automated hooks** for type checking, linting, formatting, and testing
+- **Python tool ecosystem** integration (ruff, black, pytest, mypy)
 
-## Quickstart
-
-```bash
-npm install
-npm run typecheck
-npm run build
-```
-
-Run the MCP server locally:
+## Quick Setup
 
 ```bash
-npm run dev
-# or
-npm run start
+# Run the setup command (after installing the plugin)
+/setup
 ```
 
-## Fork checklist (rename it once)
-
-- Rename the package in `package.json` and the server name/version in `src/index.ts`.
-- Update the `.mcp.json` server key (`mcpServers.<name>`) to match.
-
-## Using with Claude Code (recommended)
-
-1) Build the server:
+Or manually:
 
 ```bash
-npm run build
+# Install Pyright LSP
+npm install -g pyright
+
+# Install Python tools
+pip install ruff black isort mypy bandit pytest pip-audit
 ```
 
-2) Ensure `.mcp.json` exists at repo root (it does in this template):
+## Features
+
+### LSP Integration
+
+The plugin configures Pyright for Claude Code via `.lsp.json`:
 
 ```json
 {
-  "mcpServers": {
-    "claude-plugin-template": {
-      "type": "stdio",
-      "command": "node",
-      "args": ["dist/index.js"],
-      "env": {}
+    "python": {
+        "command": "pyright-langserver",
+        "args": ["--stdio"],
+        "extensionToLanguage": { ".py": "python", ".pyi": "python" },
+        "transport": "stdio"
     }
-  }
 }
 ```
 
-3) Add/enable the MCP server in Claude Code.
+**Capabilities:**
+- Go to definition / references
+- Hover documentation
+- Type inference and checking
+- Import resolution
+- Real-time diagnostics
 
-If you use the CLI, the flow is typically:
+### Automated Hooks
+
+All hooks run `afterWrite` and are configured in `hooks/hooks.json`.
+
+#### Core Python Hooks
+
+| Hook | Trigger | Description |
+|------|---------|-------------|
+| `python-format-on-edit` | `**/*.py` | Auto-format with black or ruff |
+| `python-isort-on-edit` | `**/*.py` | Sort imports with isort or ruff |
+| `python-lint-on-edit` | `**/*.py` | Lint with ruff or flake8 |
+| `python-type-check` | `**/*.py` | Type check with pyright or mypy |
+
+#### Security & Quality
+
+| Hook | Trigger | Tool Required | Description |
+|------|---------|---------------|-------------|
+| `python-bandit` | `**/*.py` | `bandit` | Security vulnerability scanning |
+| `python-todo-fixme` | `**/*.py` | - | Surface TODO/FIXME/XXX/HACK comments |
+| `python-docstring-hint` | `**/*.py` | - | Suggest docstrings for public functions |
+
+#### Dependencies
+
+| Hook | Trigger | Tool Required | Description |
+|------|---------|---------------|-------------|
+| `pip-audit` | `**/requirements.txt` | `pip-audit` | Security audit of dependencies |
+| `pyproject-validate` | `**/pyproject.toml` | - | Validate TOML syntax |
+| `unpinned-deps-check` | `**/requirements.txt` | - | Warn about unpinned versions |
+
+## Required Tools
+
+### Core
+
+| Tool | Installation | Purpose |
+|------|--------------|---------|
+| `pyright` | `npm install -g pyright` | LSP server & type checking |
+| `python` | System package manager | Python runtime |
+
+### Recommended
+
+| Tool | Installation | Purpose |
+|------|--------------|---------|
+| `ruff` | `pip install ruff` | Fast linting & formatting |
+| `black` | `pip install black` | Code formatting |
+| `isort` | `pip install isort` | Import sorting |
+| `mypy` | `pip install mypy` | Static type checking |
+| `bandit` | `pip install bandit` | Security scanning |
+| `pytest` | `pip install pytest` | Testing framework |
+
+### Optional
+
+| Tool | Installation | Purpose |
+|------|--------------|---------|
+| `pip-audit` | `pip install pip-audit` | Dependency security |
+| `safety` | `pip install safety` | Dependency vulnerability check |
+
+## Commands
+
+### `/setup`
+
+Interactive setup wizard for configuring the complete Python development environment.
+
+**What it does:**
+
+1. **Verifies Python installation** - Checks `python` CLI is available
+2. **Installs Pyright** - LSP server for IDE features
+3. **Installs linting tools** - ruff, black, isort
+4. **Installs type checkers** - mypy, pyright
+5. **Installs security scanners** - bandit, pip-audit
+6. **Validates LSP config** - Confirms `.lsp.json` is correct
+7. **Verifies hooks** - Confirms hooks are properly loaded
+
+**Usage:**
 
 ```bash
-claude mcp add claude-plugin-template -- node dist/index.js
-claude mcp list
+/setup
 ```
 
-Docs: https://code.claude.com/docs/en/mcp
+## Project Structure
 
-## Using with Claude Desktop
-
-Claude Desktop MCP servers are typically configured in `claude_desktop_config.json`.
-Common location (macOS): `~/Library/Application Support/Claude/claude_desktop_config.json`.
-Docs: https://modelcontextprotocol.io/docs/develop/connect-local-servers
-
-## What’s included
-
-### 1) MCP server (`src/index.ts`)
-
-This template exposes:
-- Tool: `hello({ name })` → returns “Hello, <name>!”
-- Resource: `template://readme`
-
-Add more tools/resources in `src/index.ts`.
-
-### 2) Claude Code commands (`.claude/commands/*`)
-
-Examples included:
-- `/setup` – install + build sanity check
-- `/mcp [dev|build|start]` – run the MCP server
-- `/github:pr-review <owner/repo#PR>` – review a PR with `gh`
-
-Reminder: nested folders create namespaces, e.g. `.claude/commands/github/pr-review.md` ⇒ `/github:pr-review`.
-Docs: https://code.claude.com/docs/en/slash-commands
-
-### 3) Claude Code hooks (`.claude/settings.json` + `.claude/hooks/*`)
-
-This template includes a minimal **PreToolUse** Bash guard hook that blocks obviously-dangerous shell commands.
-Docs: https://code.claude.com/docs/en/hooks
-
-### 4) “Skills” (`skills/*`)
-
-Put durable team guidance here: conventions, how-to, runbooks.
-
-### 5) GitHub automation (`.github/*`)
-
-- CI (`.github/workflows/ci.yml`) runs `npm ci`, `typecheck`, `build`.
-- Issue templates + PR template.
-- Copilot instructions and reusable prompts.
-
-## Developing new features
-
-### Add a new MCP tool
-
-1) Add `server.tool(...)` in `src/index.ts`.
-2) Run:
-
-```bash
-npm run typecheck
-npm run build
+```
+python-lsp/
+├── .claude-plugin/
+│   └── plugin.json           # Plugin metadata
+├── .lsp.json                  # Pyright configuration
+├── commands/
+│   └── setup.md              # /setup command
+├── hooks/
+│   ├── hooks.json            # Hook definitions
+│   └── scripts/
+│       └── python-hooks.sh   # Hook dispatcher
+├── tests/
+│   └── test_sample.py        # Test file for all features
+├── CLAUDE.md                  # Project instructions
+└── README.md                  # This file
 ```
 
-### Add a new slash command
+## Troubleshooting
 
-Create: `.claude/commands/<name>.md`
+### Pyright not starting
 
-Use YAML frontmatter to set `description` and restrict tools via `allowed-tools`.
+1. Ensure `python` files exist in project root
+2. Verify installation: `pyright --version`
+3. Check LSP config: `cat .lsp.json`
 
-## Security checklist
+### Type errors not showing
 
-- Never commit tokens or API keys.
-- Prefer `env` entries in `.mcp.json` and local overrides in `.claude/settings.local.json`.
-- Keep hooks fail-open unless you’re confident about payload compatibility.
+1. Create `pyrightconfig.json` or `pyproject.toml` with pyright config
+2. Ensure virtual environment is activated
+3. Run `pyright` manually to check configuration
+
+### Hooks not triggering
+
+1. Verify hooks are loaded: `cat hooks/hooks.json`
+2. Check file patterns match your structure
+3. Ensure required tools are installed (`command -v ruff`)
+
+## License
+
+MIT

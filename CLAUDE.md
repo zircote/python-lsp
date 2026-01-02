@@ -1,40 +1,54 @@
-# CLAUDE.md (project context)
+# CLAUDE.md
 
-This repository is a **template** for building Claude Code automations and MCP servers.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Repo goals
+## Project Overview
 
-- Be easy to fork.
-- Provide a sane default MCP server in TypeScript.
-- Provide examples of Claude Code commands and hooks.
+A Claude Code plugin providing Python development support through Pyright LSP integration and 15 automated hooks for type checking, linting, formatting, testing, and security scanning.
 
-## Key files
+## Setup
 
-- `.mcp.json`: Claude Code MCP server configuration (project-scoped).
-- `.claude/settings.json`: Hook configuration.
-- `.claude/commands/`: Custom commands that show up as `/...`.
-- `.claude/hooks/`: Hook scripts.
-- `src/index.ts`: MCP server entrypoint.
+Run `/setup` to install all required tools, or manually:
 
-## Development conventions
+```bash
+npm install -g pyright
+pip install ruff black isort mypy bandit pytest pip-audit
+```
 
-- Prefer minimal diffs.
-- Keep scripts safe and portable.
-- Keep documentation in sync (README + skills files).
+## Key Files
 
-## When adding tools
+| File | Purpose |
+|------|---------|
+| `.lsp.json` | Pyright LSP configuration |
+| `hooks/hooks.json` | Automated development hooks |
+| `hooks/scripts/python-hooks.sh` | Hook dispatcher script |
+| `commands/setup.md` | `/setup` command definition |
+| `.claude-plugin/plugin.json` | Plugin metadata |
 
-- Use `zod` schemas.
-- Return text via `{ content: [{ type: "text", text: "..." }] }`.
-- Avoid side effects by default; require explicit user intent for destructive operations.
+## Hook System
 
-## When adding hooks
+All hooks trigger `afterWrite`. Hooks use `command -v` checks to skip gracefully when optional tools aren't installed.
 
-- Hooks are configured in `.claude/settings.json`.
-- Keep hooks fast and deterministic.
-- Prefer blocking only high-confidence dangerous operations.
+**Hook categories:**
+- **Formatting** (`**/*.py`): black/ruff format, isort
+- **Linting** (`**/*.py`): ruff/flake8, type checking
+- **Security** (`**/*.py`): bandit, pip-audit
+- **Dependencies** (`**/requirements.txt`, `**/pyproject.toml`): audit, validation
 
-Docs:
-- Hooks: https://code.claude.com/docs/en/hooks
-- Slash commands: https://code.claude.com/docs/en/slash-commands
-- MCP: https://code.claude.com/docs/en/mcp
+## When Modifying Hooks
+
+Edit `hooks/scripts/python-hooks.sh`. The script handles different file types and runs appropriate tools:
+
+- Use `|| true` to prevent hook failures from blocking writes
+- Use `head -N` to limit output verbosity
+- Use `command -v tool >/dev/null &&` for optional tool dependencies
+
+## When Modifying LSP Config
+
+Edit `.lsp.json`. The `extensionToLanguage` map controls which files use the LSP. Current config maps `.py` and `.pyi` files to the `python` language server.
+
+## Conventions
+
+- Prefer minimal diffs
+- Keep hooks fast (use `--quiet`, limit output with `head`)
+- Documentation changes: update both README.md and commands/setup.md if relevant
