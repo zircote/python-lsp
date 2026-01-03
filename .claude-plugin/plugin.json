@@ -1,6 +1,6 @@
 {
   "name": "python-lsp",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Claude Code plugin for Python development with Pyright LSP integration, 15 automated hooks for type checking, linting (ruff), formatting (black), testing (pytest), and security scanning",
   "author": {
     "name": "zircote",
