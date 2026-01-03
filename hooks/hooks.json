@@ -8,9 +8,12 @@
           {
             "type": "command",
             "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/python-hooks.sh\"",
-            "timeout": 120
+            "timeout": 10
           }
-        ]
+        ],
+        "conditions": {
+          "fileExtensions": [".py"]
+        }
       }
     ]
   }
